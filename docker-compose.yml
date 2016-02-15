@@ -1,0 +1,44 @@
+vttablet1:
+  image: vitess/base
+  ports:
+    - "15000:15000"
+    - "15100:15100"
+    - "15101:15101"
+    - "15102:15102"
+    - "15103:15103"
+    - "15991:15991"
+    - "15999:15999"
+  command: examples/local/zk-up.sh
+  volumes:
+    - ./scripts:/tmp/scripts
+
+vttablet2:
+  image: vitess/base
+  ports:
+    - "15001:15001"
+
+vttablet3:
+  image: vitess/base
+  ports:
+    - "15002:15002"
+
+vtctld:
+  image: vitess/base
+  ports:
+    - "15999:15999"
+  links:
+    - vttablet1:vttablet1
+    - vttablet2:vttablet2
+    - vttablet3:vttablet3
+
+vtgate:
+  image: vitess/base
+  ports:
+    - "15001:15001"
+    - "15991:15991"
+    - "15999:15999"
+  links:
+    - vtctld:vtctld
+    - vttablet1:vttablet1
+    - vttablet2:vttablet2
+    - vttablet3:vttablet3
