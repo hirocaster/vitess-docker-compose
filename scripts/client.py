@@ -33,22 +33,25 @@ args = parser.parse_args()
 # Connect
 conn = vtgate_client.connect('grpc', args.server, args.timeout)
 
-try:
-  # Insert something.
-  print 'Inserting into master...'
-  cursor = conn.cursor(
-    tablet_type='master', keyspace='shard_key_space',
-    keyranges=UNSHARDED, writable=True)
+keyspace = "user"
 
-  # cursor = conn.cursor(tablet_type="master", keyspace='shard_key_space', writable=True)
+try:
+  cursor = conn.cursor(
+    tablet_type="master", keyspace=keyspace, writable=True)
+
+  # Read it back from the master.
+  print 'Reading from master...'
+  cursor.execute('SELECT * FROM user', {})
+  for row in cursor.fetchall():
+    print row
 
   cursor.begin()
-  cursor.execute('INSERT INTO test_table (msg) VALUES (%(msg)s)', {'msg': 'V is for speed'})
+  cursor.execute('INSERT INTO user (name) VALUES ("foobar")', {})
   cursor.commit()
 
   # Read it back from the master.
   print 'Reading from master...'
-  cursor.execute('SELECT * FROM test_table', {})
+  cursor.execute('SELECT * FROM user', {})
   for row in cursor.fetchall():
     print row
 
@@ -57,10 +60,10 @@ try:
   # Read from a replica.
   # Note that this may be behind master due to replication lag.
   print 'Reading from replica...'
-  # cursor = conn.cursor('shard_key_space', 'replica', keyranges=SHARDED)
   cursor = conn.cursor(
-    tablet_type='replica', keyspace='shard_key_space', keyranges=UNSHARDED)
-  cursor.execute('SELECT * FROM test_table', {})
+    tablet_type="master", keyspace=keyspace, writable=True)
+
+  cursor.execute('SELECT * FROM user', {})
   for row in cursor.fetchall():
     print row
   cursor.close()
