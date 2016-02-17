@@ -3,29 +3,34 @@ vttablet1:
   ports:
     - "15000:15000"
     - "15100:15100"
-    - "15101:15101"
-    - "15102:15102"
     - "15103:15103"
     - "15991:15991"
-    - "15999:15999"
   command: examples/local/zk-up.sh
   volumes:
     - ./scripts:/tmp/scripts
+  links:
+    - vttablet2:vttablet2
+    - vttablet3:vttablet3
 
 vttablet2:
   image: vitess/base
   ports:
     - "15001:15001"
+  command: examples/local/zk-up.sh
+
 
 vttablet3:
   image: vitess/base
   ports:
     - "15002:15002"
+  command: examples/local/zk-up.sh
 
 vtctld:
   image: vitess/base
   ports:
+    - "15000:15000"
     - "15999:15999"
+  command: /vt/bin/vtctld -web_dir /vt/src/github.com/youtube/vitess/web/vtctld -tablet_protocol grpc -tablet_manager_protocol grpc -service_map grpc-vtctl -backup_storage_implementation file -file_backup_storage_root /vt/vtdataroot/backups -log_dir /vt/vtdataroot/tmp -port 15000 -grpc_port 15999 -pid_file /vt/vtdataroot/tmp/vtctld.pid
   links:
     - vttablet1:vttablet1
     - vttablet2:vttablet2
